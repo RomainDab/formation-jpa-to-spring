@@ -3,7 +3,8 @@ package sopra.formation.test;
 import java.time.LocalDate;
 import java.time.Month;
 
-import sopra.formation.Application;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
 import sopra.formation.dao.IAbsenceDao;
 import sopra.formation.dao.ICompetenceDao;
 import sopra.formation.dao.ICoursDao;
@@ -13,6 +14,7 @@ import sopra.formation.dao.IMatiereDao;
 import sopra.formation.dao.ISalleDao;
 import sopra.formation.dao.IUtilisateurDao;
 import sopra.formation.model.Absence;
+import sopra.formation.model.Adresse;
 import sopra.formation.model.Competence;
 import sopra.formation.model.Cours;
 import sopra.formation.model.Cursus;
@@ -29,14 +31,16 @@ import sopra.formation.model.Utilisateur;
 public class TestLoad {
 
 	public static void main(String[] args) {
-		IAbsenceDao abscenceDao = Application.getInstance().getAbscenceDao();
-		ICompetenceDao competenceDao = Application.getInstance().getCompetenceDao();
-		ICoursDao coursDao = Application.getInstance().getCoursDao();
-		ICursusDao cursusDao = Application.getInstance().getCursusDao();
-		IFiliereDao filiereDao = Application.getInstance().getFiliereDao();
-		IMatiereDao matiereDao = Application.getInstance().getMatiereDao();
-		ISalleDao salleDao = Application.getInstance().getSalleDao();
-		IUtilisateurDao utilisateurDao = Application.getInstance().getUtilisateurDao();
+		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("application-context.xml");
+		
+		IAbsenceDao absenceDao = context.getBean(IAbsenceDao.class);
+		ICompetenceDao competenceDao = context.getBean(ICompetenceDao.class);
+		ICoursDao coursDao = context.getBean(ICoursDao.class);
+		ICursusDao cursusDao = context.getBean(ICursusDao.class);
+		IFiliereDao filiereDao = context.getBean(IFiliereDao.class);
+		IMatiereDao matiereDao = context.getBean(IMatiereDao.class);
+		ISalleDao salleDao = context.getBean(ISalleDao.class);
+		IUtilisateurDao utilisateurDao = context.getBean(IUtilisateurDao.class);
 
 		Utilisateur admin = new Utilisateur();
 		admin.setIdentifiant("admin");
@@ -66,8 +70,8 @@ public class TestLoad {
 
 		jeremy = (Formateur) utilisateurDao.save(jeremy);
 
-		abscenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 27), jeremy));
-		abscenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 28), jeremy));
+		absenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 27), jeremy));
+		absenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 28), jeremy));
 
 		Formateur eric = new Formateur();
 		eric.setNom("SULTAN");
@@ -79,11 +83,11 @@ public class TestLoad {
 
 		eric = (Formateur) utilisateurDao.save(eric);
 
-		abscenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 24), eric));
-		abscenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 25), eric));
-		abscenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 26), eric));
-		abscenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 27), eric));
-		abscenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 28), eric));
+		absenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 24), eric));
+		absenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 25), eric));
+		absenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 26), eric));
+		absenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 27), eric));
+		absenceDao.save(new Absence(LocalDate.of(2022, Month.JANUARY, 28), eric));
 
 		Stagiaire marine = new Stagiaire();
 		marine.setNom("GUEDON");
@@ -112,6 +116,11 @@ public class TestLoad {
 				.setUrl("https://ajc-ingenierie-fr.zoom.us/j/89940652253?pwd=a3ppbE5mbzdUWDdyOGFTbkVrTGxsUT09");
 
 		zoomSopraJavaNantes20211129 = salleDao.save(zoomSopraJavaNantes20211129);
+		
+		Salle sallerouge = new Salle("sallerouge");
+		sallerouge.setAdresse(new Adresse());
+		sallerouge.getAdresse().setVille("Nantes");
+		sallerouge = salleDao.save(sallerouge);
 
 		Filiere sopraJavaNantes20211129 = new Filiere();
 		sopraJavaNantes20211129.setDateDebut(LocalDate.of(2021, Month.NOVEMBER, 29));
@@ -119,7 +128,7 @@ public class TestLoad {
 		sopraJavaNantes20211129.setDispositif(Dispositif.CPRO);
 		sopraJavaNantes20211129.setGestionnaire(manu);
 		sopraJavaNantes20211129.setReferent(jeremy);
-		sopraJavaNantes20211129.setSalle(zoomSopraJavaNantes20211129);
+		sopraJavaNantes20211129.setSalle(sallerouge);
 
 		sopraJavaNantes20211129 = filiereDao.save(sopraJavaNantes20211129);
 
@@ -207,6 +216,29 @@ public class TestLoad {
 		competenceDao.save(new Competence(Niveau.CONFIRME, eric, javaAvance));
 		competenceDao.save(new Competence(Niveau.EXPERT, eric, maven));
 		competenceDao.save(new Competence(Niveau.CONFIRME, eric, JPA));
+		
+		System.out.println(salleDao.findByVille("Nantes").size());
+		
+		Formateur formateur = utilisateurDao.findByEmail("jerem@ascadis.fr");
+		System.out.println(formateur.getNom());
+		
+		System.out.println(filiereDao.findByVille("Nantes").size());
+		
+		System.out.println(coursDao.findByDifferenceDuree(sopraJavaNantes20211129.getId()).size());
+		
+		System.out.print(utilisateurDao.findByDisponible(LocalDate.of(2022,01,24),LocalDate.of(2022,01,25),"Java Objet").size());
+		
+		System.out.println(utilisateurDao.findByNomPrenom(null, "Louis").get(0).getNom());
+		System.out.println(utilisateurDao.findByNomPrenom("DABOT", null).get(0).getNom());
+		System.out.println(utilisateurDao.findByNomPrenom("GUEDON", "Marine").get(0).getNom());
+
+		System.out.println(utilisateurDao.findPrechargementCursus().get(0).getCursus().get(0).getFiliere().getId());
+		System.out.println(utilisateurDao.findPrechargementCursus().get(1).getCursus().get(0).getFiliere().getId());
+		
+		System.out.println(utilisateurDao.findPrechargementCoursMatiere().get(0).getCours().get(0).getMatiere().getTitre());
+		System.out.println(utilisateurDao.findPrechargementCoursMatiere().get(1).getCours().get(0).getMatiere().getTitre());
+		
+		context.close();
 	}
 
 }
